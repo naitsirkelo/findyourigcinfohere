@@ -9,6 +9,7 @@ import (
 	"time"
 	"log"
 	"os"
+	"io"
 	"github.com/marni/goigc"		// Main library for working on IGC files
 	"github.com/p3lim/iso8601"	// For formatting time into ISO 8601
 )
