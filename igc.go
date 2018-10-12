@@ -49,7 +49,10 @@ func handleIgcPlus(w http.ResponseWriter, r *http.Request) {
 		t := len(TrackIds)		// Number of already stored IDs
 		idString := parts[4]	// Stores ID from 5th element in a string
 
-		id := strconv.Atoi(idString)	// Converts to int
+		id, err := strconv.Atoi(idString)	// Converts to int
+		if(err != nil){
+				http.Error(w, "Converting Failed. Request Timeout.", 408)
+		}	
 
 		url := TrackUrl[id]	// Gets the correct URL based on input id
 
