@@ -1,6 +1,6 @@
 # README
 
-The Project named GetIgcInfoGO will allow the user to access a deployed application on Heroku, 
+The Project named FindYourIgcInfoHere will allow the user to access a deployed application on Heroku, 
 and then gather required information regarding a logged flight from an IGC formatted file.
 
 
