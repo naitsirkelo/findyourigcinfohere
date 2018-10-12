@@ -37,7 +37,7 @@ type MetaData struct {		// Encoding meta information of server
 
 
 type TrackId struct {			// Encoding URL ID
-	Id int	`json: "id"`
+	Id int	`json:"id"`
 }
 
 
@@ -103,7 +103,7 @@ func handleIgcPlus(w http.ResponseWriter, r *http.Request) {
 			} else {
 				http.Error(w, "No valid ID value.", 400)	// Bad request
 			}
-			
+
 		} else {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
