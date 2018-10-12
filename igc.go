@@ -16,6 +16,7 @@ import (
 
 var TrackUrl map[int]string		// Declare map for storing URLs
 var TrackIds map[int]int			// Declare map for storing IDs corresponding to URL
+var Ids []int									// Declare slice for storing IDs
 var startTime time.Time				// Variable for calculating uptime
 
 
@@ -83,11 +84,16 @@ func handleIgcPlus(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintln(w, track.Date.String())
 
 			} else {	// If neither of the correct variables are called: 400
-				http.Error(w, "No valid Field value.", 400)
+				http.Error(w, "No valid Field value.", 400)	// Bad request
 			}
 
 		// ONLY ID, EMPTY FIELD
-		} else if (l == 5 && id > 0 && id <= t) {	// 5 parts and id input is valid (1-len)
+		} else if (l == 5) {	// 5 parts and id input is valid (1-len)
+
+								// If no valid ID was StatusNotFound: 400
+			if (id < 0 || id > t) {
+					http.Error(w, "No valid ID value.", 400)	// Bad request
+			}
 								// Creating temporary struct to hold variables
 			temp := TrackInfo{track.Date.String(), track.Pilot, track.GliderType, track.GliderID, trackLen}
 								// Encodes temporary struct and shows information on screen
@@ -96,9 +102,9 @@ func handleIgcPlus(w http.ResponseWriter, r *http.Request) {
 			if(err3 != nil){
 			  	http.Error(w, "Encoding Failed. Request Timeout.", 408)
 			}
-		// If neither ID or ID + Field was found: 400
+
 		} else {
-			http.Error(w, "No valid ID value.", 400)	// Bad request
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
 	}
 }
@@ -107,17 +113,17 @@ func handleIgcPlus(w http.ResponseWriter, r *http.Request) {
 func handleIgc(w http.ResponseWriter, r *http.Request) {
 
 		if (r.Method == http.MethodGet) {		// Check if GET was called
+				// Append each key in TrackUrl to the slice 'a'
+			for key := len(Ids); key <= len(TrackUrl); key++ {
+				Ids = append(Ids, key)
+				// fmt.Println("\n", url)
+				// // To avoid console error of URL not used.
 
-			// var Ids []int									// Declare slice for storing IDs
-			// Ids = make([]int, len(TrackUrl))	// Initialize empty ID int slice
-			//
-			// for key, url := range TrackUrl {	// Append each key in TrackUrl to the slice 'a'
-			// 	Ids = append(Ids, key)
-			// 	fmt.Println("\n", url)					// To avoid console error of URL not used.
-			// }
+			}
+
 			w.Header().Set("Content-Type", "application/json")
 
-			err := json.NewEncoder(w).Encode(TrackIds)
+			err := json.NewEncoder(w).Encode(Ids)		// Encode ID int array
 			if(err != nil){
 			  	http.Error(w, "Encoding Failed. Request Timeout.", 408)
 			}
@@ -183,8 +189,9 @@ func GetPort() string {
 
 func main() {
 
-		TrackUrl = make(map[int]string) // Initializing map arrays
+		TrackUrl = make(map[int]string) 	// Initializing map arrays
 		TrackIds = make(map[int]int)
+		Ids = make([]int, len(TrackUrl))	// Initialize empty ID int slice
 		startTime = time.Now()	// Initializes timer
 
 		http.HandleFunc("/", handleInvalid)
