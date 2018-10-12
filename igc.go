@@ -112,7 +112,7 @@ func handleIgc(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("\nGET /api/igc") 		// Write to console
 
 			var a []int											// Initialize empty int slice
-			a = make[]int
+			a = make([]int, len(TrackUrl))
 			for key, url := range TrackUrl {// Append each key in TrackUrl to the slice 'a'
 				a = append(a, key)
 				fmt.Println("\n", url)				// To avoid console error of URL not used.
