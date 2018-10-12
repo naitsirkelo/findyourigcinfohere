@@ -3,6 +3,10 @@
 The Project named FindYourIgcInfoHere will allow the user to access a deployed application on Heroku, 
 and then gather required information regarding a logged flight from an IGC formatted file.
 
+Deployed Heroku link:
+
+https://igcinfoimt2681.herokuapp.com
+
 
 **Main file: igc.go**
 

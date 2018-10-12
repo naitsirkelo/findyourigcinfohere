@@ -99,15 +99,15 @@ func handleIgcPlus(w http.ResponseWriter, r *http.Request) {
 				if(err3 != nil){
 				  	http.Error(w, "Encoding Failed. Request Timeout.", 408)
 				}
-
-			} else {
-				http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-			}
 			// ELSE: Invalid ID entered
+			} else {
+				http.Error(w, "No valid ID value.", 400)	// Bad request
+			}
+			
 		} else {
-			http.Error(w, "No valid ID value.", 400)	// Bad request
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
-	} 
+	}
 }
 
 
