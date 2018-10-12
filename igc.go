@@ -49,22 +49,18 @@ func handleIgcPlus(w http.ResponseWriter, r *http.Request) {
 		t := len(TrackIds)		// Number of already stored IDs
 		idString := parts[4]	// Stores ID from 5th element in a string
 
-		id, err := strconv.Atoi(idString)	// Converts to int
-		if (err != nil) {
-			fmt.Printf("\nConverting Error", err)
-		}
+		id := strconv.Atoi(idString)	// Converts to int
 
 		url := TrackUrl[id]	// Gets the correct URL based on input id
 
 		track, err2 := igc.ParseLocation(url)	// Parses information from URL location
 		if(err2 != nil){
-				fmt.Println("\nParse Error:", err2)
+				http.Error(w, "Parsing Failed. Request Timeout.", 408)
 		}																			// Calculates track length
 		trackLen := track.Points[0].Distance(track.Points[len(track.Points)-1])
 
 		// WITH FIELD
 		if (l == 6 && id > 0 && id <= t) {					// If the call consists of 6 parts
-			fmt.Printf("\nGET /api/igc/<Id>/<Field>") // Write to console
 
 			field := parts[5]				// Store the field input
 
@@ -83,24 +79,23 @@ func handleIgcPlus(w http.ResponseWriter, r *http.Request) {
 			} else if (field == "H_date") {
 				fmt.Fprintln(w, track.Date.String())
 
-			} else {	// If neither of the correct variables are called: 404
-				http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			} else {	// If neither of the correct variables are called: 400
+				http.Error(w, "No valid Field value.", 400)
 			}
 
 		// ONLY ID, EMPTY FIELD
 		} else if (l == 5 && id > 0 && id <= t) {	// 5 parts and id input is valid (1-len)
-			fmt.Printf("\nGET /api/igc/<Id>") 			// Write to console
 								// Creating temporary struct to hold variables
 			temp := TrackInfo{track.Date.String(), track.Pilot, track.GliderType, track.GliderID, trackLen}
 								// Encodes temporary struct and shows information on screen
 			http.Header.Add(w.Header(), "Content-type", "application/json")
 			err3 := json.NewEncoder(w).Encode(temp)
 			if(err3 != nil){
-			  	fmt.Println("\nEncode Error:", err3)
+			  	http.Error(w, "Encoding Failed. Request Timeout.", 408)
 			}
-		// If neither ID or ID + Field was found: 404
+		// If neither ID or ID + Field was found: 400
 		} else {
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			http.Error(w, "No valid ID value.", 400)	// Bad request
 		}
 	}
 }
@@ -108,29 +103,29 @@ func handleIgcPlus(w http.ResponseWriter, r *http.Request) {
 
 func handleIgc(w http.ResponseWriter, r *http.Request) {
 
-		if (r.Method == http.MethodGet) {	// Check if GET was called
-			fmt.Printf("\nGET /api/igc") 		// Write to console
+		if (r.Method == http.MethodGet) {		// Check if GET was called
 
-			var a []int											// Initialize empty int slice
+			var a []int												// Initialize empty int slice
 			a = make([]int, len(TrackUrl))
-			for key, url := range TrackUrl {// Append each key in TrackUrl to the slice 'a'
+
+			for key, url := range TrackUrl {	// Append each key in TrackUrl to the slice 'a'
 				a = append(a, key)
-				fmt.Println("\n", url)				// To avoid console error of URL not used.
+				fmt.Println("\n", url)					// To avoid console error of URL not used.
 			}
 			w.Header().Set("Content-Type", "application/json")
+
 			err := json.NewEncoder(w).Encode(a)
 			if(err != nil){
-			  	fmt.Println("\nEncode Error:", err)
+			  	http.Error(w, "Encoding Failed. Request Timeout.", 408)
 			}
 
 		} else if (r.Method == http.MethodPost) {	// Check if POST was called
-			fmt.Printf("\nPOST /api/igc")						// Write to console
 
 			var temp map[string]interface{}	// Interface is unknown type / C++ auto
 
 			err2 := json.NewDecoder(r.Body).Decode(&temp)	// Decode posted url
 			if (err2 != nil) {
-				fmt.Printf("\nDecode Error", err2)
+				http.Error(w, "Decoding Failed. Request Timeout.", 408)
 			}
 														// Internal identification: Int up from 1
 			tempLen := len(TrackUrl) + 1
@@ -143,7 +138,7 @@ func handleIgc(w http.ResponseWriter, r *http.Request) {
 			http.Header.Add(w.Header(), "Content-type", "application/json")
 			err3 := json.NewEncoder(w).Encode(idStruct)
 			if (err3 != nil) {
-				fmt.Printf("\nEncode Error", err3)
+				http.Error(w, "Encoding Failed. Request Timeout.", 408)
 			}
 		}
 }
@@ -151,9 +146,6 @@ func handleIgc(w http.ResponseWriter, r *http.Request) {
 
 func handleApi(w http.ResponseWriter, r *http.Request) {
 	if (r.Method == http.MethodGet) {	// Check if GET was called
-
-		fmt.Printf("\nGET /api")	// Write to console
-
 									// Using included library, format time Since into ISO 8601
 		t := iso8601.Format(time.Since(startTime))
 
@@ -164,12 +156,12 @@ func handleApi(w http.ResponseWriter, r *http.Request) {
 		http.Header.Add(w.Header(), "Content-type", "application/json")
 		err := json.NewEncoder(w).Encode(temp)
 		if(err != nil){
-				fmt.Println("\nEncode Error:", err)
+				http.Error(w, "Encoding Failed. Request Timeout.", 408)
 		}
 	}
 }
 
-		// Handle every call beginning with anything else than igcinfo/api
+				// Handle every call beginning with anything else than igcinfo/api
 func handleInvalid(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 }
@@ -197,10 +189,7 @@ func main() {
 		http.HandleFunc("/igcinfo/api/igc", handleIgc)
 		http.HandleFunc("/igcinfo/api/igc/", handleIgcPlus)
 
-		fmt.Printf("\nPing")		// Server opened
-
 		err := http.ListenAndServe(GetPort(), nil)
-		// err := http.ListenAndServe("localhost:8080", nil);
 		if err != nil {
 				log.Fatal("ListenAndServe Error: ", err)
 		}
