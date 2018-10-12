@@ -63,49 +63,50 @@ func handleIgcPlus(w http.ResponseWriter, r *http.Request) {
 		}																			// Calculates track length
 		trackLen := track.Points[0].Distance(track.Points[len(track.Points)-1])
 
+ 		if (id > 0 && id <= t) {
 		// WITH FIELD
-		if (l == 6 && id > 0 && id <= t) {					// If the call consists of 6 parts
+			if (l == 6) {					// If the call consists of 6 parts
 
-			field := parts[5]				// Store the field input
+				field := parts[5]				// Store the field input
 
-			if (field == "pilot") {	// Check which variable 'field' is equal to
-				fmt.Fprintln(w, track.Pilot)
+				if (field == "pilot") {	// Check which variable 'field' is equal to
+					fmt.Fprintln(w, track.Pilot)
 
-			} else if (field == "glider") {
-				fmt.Fprintln(w, track.GliderType)
+				} else if (field == "glider") {
+					fmt.Fprintln(w, track.GliderType)
 
-			} else if (field == "glider_id") {
-				fmt.Fprintln(w, track.GliderID)
+				} else if (field == "glider_id") {
+					fmt.Fprintln(w, track.GliderID)
 
-			} else if (field == "track_length") {
-				fmt.Fprintln(w, trackLen)
+				} else if (field == "track_length") {
+					fmt.Fprintln(w, trackLen)
 
-			} else if (field == "H_date") {
-				fmt.Fprintln(w, track.Date.String())
+				} else if (field == "H_date") {
+					fmt.Fprintln(w, track.Date.String())
 
-			} else {	// If neither of the correct variables are called: 400
-				http.Error(w, "No valid Field value.", 400)	// Bad request
+				} else {	// If neither of the correct variables are called: 400
+					http.Error(w, "No valid Field value.", 400)	// Bad request
+				}
+
+			// ONLY ID, EMPTY FIELD
+			} else if (l == 5) {	// 5 parts and id input is valid (1-len)
+
+									// Creating temporary struct to hold variables
+				temp := TrackInfo{track.Date.String(), track.Pilot, track.GliderType, track.GliderID, trackLen}
+									// Encodes temporary struct and shows information on screen
+				http.Header.Add(w.Header(), "Content-type", "application/json")
+				err3 := json.NewEncoder(w).Encode(temp)
+				if(err3 != nil){
+				  	http.Error(w, "Encoding Failed. Request Timeout.", 408)
+				}
+
+			} else {
+				http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			}
-
-		// ONLY ID, EMPTY FIELD
-		} else if (l == 5) {	// 5 parts and id input is valid (1-len)
-
-								// If no valid ID was StatusNotFound: 400
-			if (id < 0 || id > t) {
-					http.Error(w, "No valid ID value.", 400)	// Bad request
-			}
-								// Creating temporary struct to hold variables
-			temp := TrackInfo{track.Date.String(), track.Pilot, track.GliderType, track.GliderID, trackLen}
-								// Encodes temporary struct and shows information on screen
-			http.Header.Add(w.Header(), "Content-type", "application/json")
-			err3 := json.NewEncoder(w).Encode(temp)
-			if(err3 != nil){
-			  	http.Error(w, "Encoding Failed. Request Timeout.", 408)
-			}
-
-		} else {
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
+	// ELSE: Invalid ID entered
+	} else {
+		http.Error(w, "No valid ID value.", 400)	// Bad request
 	}
 }
 
@@ -131,9 +132,11 @@ func handleIgc(w http.ResponseWriter, r *http.Request) {
 
 			var temp map[string]interface{}	// Interface is unknown type / C++ auto
 
-			err2 := json.NewDecoder(r.Body).Decode(&temp)	// Decode posted url
+			err2 := json.NewDecoder(r.Body).Decode(&temp)					// Decode posted url
 			if (err2 != nil) {
 				http.Error(w, "Decoding Failed. Request Timeout.", 408)
+			} else if (err2 == io.EOF) {		// Empty body error
+				http.Error(w, "Empty Body For Post Request.", 400)	// Bad request
 			}
 														// Internal identification: Int up from 1
 			tempLen := len(TrackUrl) + 1
