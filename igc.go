@@ -114,7 +114,7 @@ func handleIgc(w http.ResponseWriter, r *http.Request) {
 
 		if (r.Method == http.MethodGet) {		// Check if GET was called
 				// Append each key in TrackUrl to the slice 'a'
-			for key := len(Ids); key <= len(TrackUrl); key++ {
+			for key := len(Ids); key < len(TrackUrl); key++ {
 				Ids = append(Ids, key)
 				// fmt.Println("\n", url)
 				// // To avoid console error of URL not used.
