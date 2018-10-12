@@ -19,7 +19,10 @@ behind the structure without disrupting the flow or making a clutter of the code
 
 The following sections of code are used as alternatives.
 
-First section: Alternative for formatting 'uptime' into ISO 8601, 
+
+First section:
+
+Alternative for formatting 'uptime' into ISO 8601,
 if the included library would no longer be dependent.
 
 
@@ -44,7 +47,9 @@ time := "P"+strconv.Itoa(Y)+"Y"+strconv.Itoa(Mo)+"M"+strconv.Itoa(D)+"DT"+strcon
 temp := MetaData{time, "Service for IGC tracks.", "v1"}
 ```
 
-Second section: Alternative version for ouput TrackIDs. This code encodes each struct instead 
+Second section:
+
+Alternative version for ouput TrackIDs. This code encodes each struct instead
 of printing the stored IDs as an int array.
 
 
@@ -60,15 +65,21 @@ for id := range TrackIds {
 ```
 
 
-Third section: Alternative way to print IDs, direcly from stored URLs, by storing
-placement numbers in an integer slice.
+Third section:
 
+Internal IDs given to posted URLs are alternatively stored in an individual map TrackIds, instead of URL ID
+being identification key in the TrackUrl map.
+*This would instead be useful if the internal system did not use integeres for IDs.*
+In case of ID as string the map could be set to 'map[int]string' and then linked with TrackUrl.
+
+Downside to this approach:
+Ineffective to store ID in this map when internal ID is an integer, so TrackUrl tracks its own key instead.
 
 ```
-var a []int
-for key, url := range TrackUrl {
-  a = append(a, key)
-  fmt.Println("\n", url)
-}
-fmt.Fprintln(w, a)
+var TrackIds map[int]int
+
+TrackIds = make(map[int]int)     // Initializing map arrays
+
+TrackUrl[tempLen] = temp["url"].(string)
+TrackIds[tempLen] = templen      // Storing URL ID
 ```

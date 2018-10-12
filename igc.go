@@ -15,8 +15,7 @@ import (
 )
 
 
-var TrackUrl map[int]string		// Declare map for storing URLs
-var TrackIds map[int]int			// Declare map for storing IDs corresponding to URL
+var TrackUrl map[int]string		// Declare map for storing URLs and URL key (ID)
 var Ids []int									// Declare slice for storing IDs
 var startTime time.Time				// Variable for calculating uptime
 
@@ -48,7 +47,7 @@ func handleIgcPlus(w http.ResponseWriter, r *http.Request) {
 
 		parts := strings.Split(r.URL.Path, "/")	// Storing URL parts in a new array
 		l := len(parts)				// Number of parts
-		t := len(TrackIds)		// Number of already stored IDs
+		t := len(TrackUrl)		// Number of already stored IDs
 		idString := parts[4]	// Stores ID from 5th element in a string
 
 		id, err := strconv.Atoi(idString)	// Converts to int
@@ -104,11 +103,11 @@ func handleIgcPlus(w http.ResponseWriter, r *http.Request) {
 			} else {
 				http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			}
+			// ELSE: Invalid ID entered
+		} else {
+			http.Error(w, "No valid ID value.", 400)	// Bad request
 		}
-	// ELSE: Invalid ID entered
-	} else {
-		http.Error(w, "No valid ID value.", 400)	// Bad request
-	}
+	} 
 }
 
 
@@ -116,7 +115,7 @@ func handleIgc(w http.ResponseWriter, r *http.Request) {
 
 		if (r.Method == http.MethodGet) {		// Check if GET was called
 
-			Ids = Ids[:0]
+			Ids = Ids[:0]											// Reseting slice before appending keys
 			for key, url := range TrackUrl {	// Append each key in TrackUrl to the slice 'a'
 				Ids = append(Ids, key)
 				fmt.Println("\n", url)					// To avoid console error of URL not used.
@@ -136,14 +135,14 @@ func handleIgc(w http.ResponseWriter, r *http.Request) {
 			err2 := json.NewDecoder(r.Body).Decode(&temp)					// Decode posted url
 			if (err2 != nil) {
 				http.Error(w, "Decoding Failed. Request Timeout.", 408)
-			} else if (err2 == io.EOF) {		// Empty body error
+			}
+			if (err2 == io.EOF) {	// Empty body error
 				http.Error(w, "Empty Body For Post Request.", 400)	// Bad request
 			}
 														// Internal identification: Int up from 1
 			tempLen := len(TrackUrl) + 1
 														// Places url in map spot nr 1 and up
 			TrackUrl[tempLen] = temp["url"].(string)
-			TrackIds[tempLen] = tempLen
 
 			idStruct := TrackId{Id: tempLen}
 														// Define header for correct output
@@ -193,7 +192,7 @@ func GetPort() string {
 func main() {
 
 		TrackUrl = make(map[int]string) 	// Initializing map arrays
-		TrackIds = make(map[int]int)
+
 		Ids = make([]int, len(TrackUrl))	// Initialize empty ID int slice
 		startTime = time.Now()	// Initializes timer
 
