@@ -16,6 +16,7 @@ import (
 
 var TrackUrl map[int]string		// Declare map for storing URLs
 var TrackIds map[int]int			// Declare map for storing IDs corresponding to URL
+var Ids []int									// Declare slice for storing IDs
 var startTime time.Time				// Variable for calculating uptime
 
 
@@ -52,7 +53,7 @@ func handleIgcPlus(w http.ResponseWriter, r *http.Request) {
 		id, err := strconv.Atoi(idString)	// Converts to int
 		if(err != nil){
 				http.Error(w, "Converting Failed. Request Timeout.", 408)
-		}	
+		}
 
 		url := TrackUrl[id]	// Gets the correct URL based on input id
 
@@ -108,16 +109,13 @@ func handleIgc(w http.ResponseWriter, r *http.Request) {
 
 		if (r.Method == http.MethodGet) {		// Check if GET was called
 
-			var a []int												// Initialize empty int slice
-			a = make([]int, len(TrackUrl))
-
 			for key, url := range TrackUrl {	// Append each key in TrackUrl to the slice 'a'
-				a = append(a, key)
+				Ids = append(Ids, key)
 				fmt.Println("\n", url)					// To avoid console error of URL not used.
 			}
 			w.Header().Set("Content-Type", "application/json")
 
-			err := json.NewEncoder(w).Encode(a)
+			err := json.NewEncoder(w).Encode(Ids)
 			if(err != nil){
 			  	http.Error(w, "Encoding Failed. Request Timeout.", 408)
 			}
@@ -185,6 +183,8 @@ func main() {
 
 		TrackUrl = make(map[int]string) // Initializing map arrays
 		TrackIds = make(map[int]int)
+
+		Ids = make([]int, len(TrackUrl))	// Initialize empty ID int slice
 		startTime = time.Now()	// Initializes timer
 
 		http.HandleFunc("/", handleInvalid)
